@@ -28,4 +28,14 @@ app.use(express.static("public"))
 	//•	cookie-parser unko req.cookies me convert kar deta hai
 app.use(cookieParser())
 
+
+// import routes
+import router from './routes/user.routes.js';
+import userRouter from './routes/user.routes.js';
+
+
+
+//declare routes
+app.use('/api/v1/user', userRouter)
+
 export {app}

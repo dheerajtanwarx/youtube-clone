@@ -1,3 +1,4 @@
+//niche likhe comments ko smjhne ke liye multer middleware me likhe logic ko smjho
 import { v2 as cloudinary } from 'cloudinary'
 
 import fs from 'fs'
@@ -41,3 +42,26 @@ const uploadOnCloudinary = async(localFilePath) => {
 // .then(result=>console.log(result));
 
 export {uploadOnCloudinary}
+
+
+// 1️⃣ Frontend
+
+// User image/video select karta hai
+
+// 2️⃣ Multer (tumhara middleware)
+
+// upload.single("avatar")
+
+// 	•	file ko ./public/null me store karta hai
+// 	•	file ka naam originalname rakhta hai
+// 	•	req.file.path bana deta hai
+
+// 3️⃣ Cloudinary function
+
+//uploadOnCloudinary(req.file.path)
+
+	// •	server se file uthata hai
+	// •	Cloudinary pe upload karta hai
+	// •	upload ke baad server wali file delete ho jati hai
+
+  
