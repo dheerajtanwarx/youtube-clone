@@ -5,8 +5,9 @@ import fs from 'fs'
 
 cloudinary.config({
     cloud_name:process.env.CLOUDINARY_CLOUD_NAME,
-    api_key:CLOUDINARY_API_KEY,
-    api_secret:UzfUwADVI-YLNPWYcDzSl7HM1Ug
+    api_key:process.env.CLOUDINARY_API_KEY,
+    api_secret:process
+    .env.CLOUDINARY_API_SECRET
 
 })
 

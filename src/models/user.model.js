@@ -53,7 +53,7 @@ type:String
 //ye humesha async rhta h kyuki inko process hone me time lgta hai
 //or ye ek middleware hai to next access to dena hi pdta hai or end me is next ko call krte hai
 //save ka mtlb hai jab koi bhi chij save ho tb run ho jaye ga automatically
-userSchema.pre("save", function(next){ 
+userSchema.pre("save", async function(next){ 
 
 // agar password change hi nahi hua
   if (!this.isModified("password")) {       //yaha par savehar 
@@ -68,7 +68,7 @@ userSchema.pre("save", function(next){
 
 
     // sirf tab hash karo jab password change ho according to upper if condition 
-this.password = bcrypt.hash(this.password, 10) //ab humne is logic ke liye pre ka use kiya ki data save hone se phle just password ko protect krdo 
+this.password = await bcrypt.hash(this.password, 10) //ab humne is logic ke liye pre ka use kiya ki data save hone se phle just password ko protect krdo 
 next() //ab next mtlb hum agle step pr ja skte hai lekin ek problem ho gyi jab bhi ye data save hoga hr baar password ko hash kre ga or store kre ga to password bar bar change hoga 
 })
 
