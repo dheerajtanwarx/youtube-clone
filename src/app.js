@@ -38,4 +38,11 @@ import userRouter from './routes/user.routes.js';
 //declare routes
 app.use('/api/v1/user', userRouter)
 
+app.use((req, res, next) => {
+  console.log("🌍 REQUEST:", req.method, req.url);
+  next();
+});
+
+
+
 export {app}

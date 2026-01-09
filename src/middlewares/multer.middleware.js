@@ -4,7 +4,7 @@ import multer from "multer";
 //ye code sidha multer repo se liya hai. https://github.com/expressjs/multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './public/null')
+    cb(null, './public/temp')
   },
   filename: function (req, file, cb) {
    
@@ -12,4 +12,4 @@ const storage = multer.diskStorage({
   }
 })
 
-export const upload = multer({ storage, })
+export const upload = multer({ storage })

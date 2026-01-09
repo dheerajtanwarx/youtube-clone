@@ -1,5 +1,6 @@
 import mongoose, { model, Schema } from "mongoose";
 import jwt from "jsonwebtoken";
+import bcrypt from 'bcrypt'
 
 const userSchema = new Schema({
 username:{
@@ -27,7 +28,7 @@ avatar:{
     type:String ,//cloudinary url
     required:true
 },
-coverimage:{
+coverImage:{
     type:String ,//cloudinary url
     
 },
@@ -69,7 +70,7 @@ userSchema.pre("save", async function(next){
 
     // sirf tab hash karo jab password change ho according to upper if condition 
 this.password = await bcrypt.hash(this.password, 10) //ab humne is logic ke liye pre ka use kiya ki data save hone se phle just password ko protect krdo 
-next() //ab next mtlb hum agle step pr ja skte hai lekin ek problem ho gyi jab bhi ye data save hoga hr baar password ko hash kre ga or store kre ga to password bar bar change hoga 
+next; //ab next mtlb hum agle step pr ja skte hai lekin ek problem ho gyi jab bhi ye data save hoga hr baar password ko hash kre ga or store kre ga to password bar bar change hoga 
 })
 
 //ye methods hum khud bna rhe .methods ka use krke hum koi bhi method bana skte hai ab ye method isliye bnaya hai kyuki upr wale method se humne hashed password ko save kr liye lekin jab next time request aaye gi tb humare pass plane password bhi to rehna chahiye usko hash se compare krne ke liye

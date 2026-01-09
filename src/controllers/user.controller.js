@@ -16,8 +16,10 @@ const registerUser = asyncHandler(async (req, res)=>{
    //return yes
 
 //aise hum user details lete hai
+console.log("FILES:", req.files);
+
     const {fullname, username, email, password}=req.body
-    console.log("email: ", email)
+    console.log("data: ", req.body)
 
 //ye validation krne ka ek new trika hai .some lga kr ki sbhi fields hai ya ni
     if(
@@ -28,7 +30,7 @@ const registerUser = asyncHandler(async (req, res)=>{
     }
 
  //ye user already exist hai ya ni uske liye   
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username},{email}] //ye bhi ek naya tarika hai multiple fields ko check krne ka logical method ke sath ek array ke andar objects unke andr ek ek field
     })
 
@@ -40,19 +42,33 @@ const registerUser = asyncHandler(async (req, res)=>{
 
 //ye images ke liye
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    //const coverImageLocalPath = req.files?.coverImage[0]?.path  //isse error aaye ga agr hum coverimage ni bheje ge to 
+
+    let coverImageLocalPath 
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required")
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
+console.log("localPath",avatarLocalPath)
 
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    let avatar
+    let coverImage
 
-    if(!avatar){
-        throw new ApiError(400, "Avatar file is required")
+    try {
+        avatar = await uploadOnCloudinary(avatarLocalPath)
+        coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    } catch (error) {
+        throw new ApiError(500, "error : uploading images to cloudinary")
     }
+
+    if (!avatar) {
+  throw new ApiError(400, "Avatar upload failed")
+}
+    
 
 // ye user create krne ke liye
 
@@ -64,7 +80,7 @@ const registerUser = asyncHandler(async (req, res)=>{
         password,
         username: username.toLowerCase()
     })
-
+console.log("Created user", user)
 //ye password or refresh token remove krne ke liye
     const createdUser = await User.findById(user._id).select("-password -refreshToken")
 
