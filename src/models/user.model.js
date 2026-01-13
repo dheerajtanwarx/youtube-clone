@@ -58,7 +58,7 @@ userSchema.pre("save", async function(next){
 
 // agar password change hi nahi hua
   if (!this.isModified("password")) {       //yaha par savehar 
-    return next()
+    return next
 }
 	                                        //operation par chale ga jaise ki
                                             //•	new user create
@@ -70,10 +70,10 @@ userSchema.pre("save", async function(next){
 
     // sirf tab hash karo jab password change ho according to upper if condition 
 this.password = await bcrypt.hash(this.password, 10) //ab humne is logic ke liye pre ka use kiya ki data save hone se phle just password ko protect krdo 
-next; //ab next mtlb hum agle step pr ja skte hai lekin ek problem ho gyi jab bhi ye data save hoga hr baar password ko hash kre ga or store kre ga to password bar bar change hoga 
+next; //ab next mtlb hum agle step pr ja skte hai lekin ek problem ho gyi jab bhi ye data save hoga hr baar password ko hash kre ga or store kre ga to password bar bar change hoga isliye humne upr if check lga diya
 })
 
-//ye methods hum khud bna rhe .methods ka use krke hum koi bhi method bana skte hai ab ye method isliye bnaya hai kyuki upr wale method se humne hashed password ko save kr liye lekin jab next time request aaye gi tb humare pass plane password bhi to rehna chahiye usko hash se compare krne ke liye
+//ye methods hum khud bna rhe .methods ka use krke hum koi bhi method bana skte hai ab ye method isliye bnaya hai kyuki upr wale method se humne hashed password ko save kr liye lekin jab next time request aaye gi jab koi user login kre ga tb humare pass plane password hi to aaye ga phir uss password ko apn apne database me saves hash password se compare kre ge
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
@@ -100,7 +100,7 @@ userSchema.methods.generateAccessToken = function(){
 }
 
 userSchema.methods.generateRefreshToken = function(){
-    jwt.sign(
+   return jwt.sign(
         {
             _id:this._id
         },

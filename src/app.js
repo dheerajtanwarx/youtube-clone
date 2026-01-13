@@ -31,12 +31,12 @@ app.use(cookieParser())
 
 // import routes
 import router from './routes/user.routes.js';
-import userRouter from './routes/user.routes.js';
+// import userRouter from './routes/user.routes.js';
 
 
 
 //declare routes
-app.use('/api/v1/user', userRouter)
+app.use('/api/v1/user', router)
 
 app.use((req, res, next) => {
   console.log("🌍 REQUEST:", req.method, req.url);

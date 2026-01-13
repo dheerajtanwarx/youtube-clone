@@ -1,9 +1,12 @@
 import { Router } from "express";
-import registerUser from "../controllers/user.controller.js";
+// import registerUser from "../controllers/user.controller.js";
+import { registerUser, loginUser, logOutUser, refreshAccessToken } 
+from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-const userRouter = Router()
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+const router = Router()
 
-userRouter.route('/register').post(
+router.route('/register').post(
 
     upload.fields([             //ye hai images ko bhejne ke liye
         {  
@@ -18,6 +21,12 @@ userRouter.route('/register').post(
         registerUser
 )
 
+router.route('/login').post(loginUser)
+
+
+//secured routes (allowed only to the login users)
+router.route("/logout").post(verifyJWT, logOutUser)
+router.route("/refresh-token").post(refreshAccessToken) //ye endpoint hai refresh-token wapis gen. krne ke liya//doubt : yaha pr hume verify jwt ki jrurt kyu ni pdi 
 
 // userRouter.route('/register').post(
 //   (req, res, next) => {
@@ -35,4 +44,4 @@ userRouter.route('/register').post(
 //   registerUser
 // )
 
-export default userRouter
+export default router
