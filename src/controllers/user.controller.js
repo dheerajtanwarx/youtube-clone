@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 
+// ye function hai specific user ka accessToken or refreshToken generate krne ke liye
 const generateAccessTokenAndRefreshToken = async(userId)=>{
    try {
 // 	•	JWT agar long time ke liye valid ho:
@@ -29,7 +30,7 @@ const generateAccessTokenAndRefreshToken = async(userId)=>{
    }
 }
 
-
+//ye hai user create krne ke liye
 const registerUser = asyncHandler(async (req, res)=>{
 
    //get user details from frontend
@@ -121,6 +122,7 @@ console.log("Created user", user)
 
 })
 
+//ye hai user login krne ke liye
 const loginUser = asyncHandler(async (req, res)=>{
    
     //req body -> data
@@ -200,6 +202,7 @@ console.log("RefreshTOken,",req.cookies.refreshToken)
    
 })
 
+//ye hai user ko logout krne ke liye
 const logOutUser = asyncHandler(async(req, res)=>{
     await User.findByIdAndUpdate(
         req.user._id,
@@ -268,4 +271,110 @@ try {
 }
 })
 
-export {registerUser, loginUser, logOutUser, refreshAccessToken}
+//ye function hai password change karne ke liye 
+const changePassword =  asyncHandler(async(req, res)=>{
+const {oldPassword, newPassword, confPassword} = req.body //Doubt humne ye variable to create kr liye lekin inki values ko inme hi kaise store krwaye ge uska logic to khi likha hi ni jse username lete h to uska schema humne bna rkha h lekin old or new kse?
+
+
+if(!(newPassword === confPassword)){
+ throw new ApiError(501, "Password is not same")
+}
+
+const user = await User.findById(req.user?._id) //ye user hum verifyJWT wale middleware ki wjh se access kr paa rhe hai 
+
+const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)//ye old password hum as a parameter transfer kr rhe h isPasswordCorrect method ko jo ki humne user model me define kr rkha hai
+if(!isPasswordCorrect){
+    throw new ApiError(400, "Invalid old Password")
+}
+
+user.password = newPassword 
+await user.save({validateBeforeSave:false})
+
+})
+
+
+// ye function hai current user ko fetch krne ke liye
+const getCurrentUser = asyncHandler(async(req, res)=>{
+    return res.status(200).json(200, req.user, "Current user fetched successfully")
+})
+
+
+//ye hai account Details ko update krne ke liye
+const updateAccountDetails = asyncHandler(async(req, res)=>{
+    const {fullname, email} = req.body
+
+    if(!(fullname || email)){
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = User.findByIdAndUpdate(req.user?._id,
+     {
+      $set:{
+        fullname,
+        email: email //jab same naam ho tb hum dono trike se likh skte hai 
+      }
+    },
+    {new : true} //ye parameter hum updated or new value return krne ke liye likhte h
+).select("-password")
+return res
+.status(200)
+.json(new ApiResponse(200, user, "Account details updated successfully"))
+})
+
+//ye hai user ke avatar ko change karne ke liye
+const updateUserAvatar = asyncHandler(async(req, res)=>{
+    const avatarLocalPath = req.file?.path /////ye hum multer middleware ki help se access kr paa rhe h Doubt:req.files or req.file me difference
+
+    if(!avatarLocalPath){
+        throw new ApiError(400, "Avatar file is missing")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if(!avatar.url){
+        throw new ApiError(400, "Error while uploading on Avatar")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+             avatar : avatar.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Avatar is updated successfully"))
+})
+
+//ye hai coverImage ko update krne ke liye
+const updateUserCoverImage = asyncHandler(async(req, res)=>{
+    const coverImageLocalPath = req.file?.path
+
+    if(!coverImageLocalPath){
+        throw new ApiError(400, "Cover Image is missing")
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if(!coverImage.url){
+        throw new ApiError(400, "Error while uploading on Cover Image")
+    }
+
+   const user =  User.findByIdAndUpdate(req.user?._id,
+        {
+            $set:{
+              coverImage: coverImage.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+    return res
+    .status(200)
+    .json( new ApiResponse(200, "Cover image updated successfully"))
+})
+
+
+export {registerUser, loginUser, logOutUser, refreshAccessToken, changePassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage}
