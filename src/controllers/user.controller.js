@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 // ye function hai specific user ka accessToken or refreshToken generate krne ke liye
 const generateAccessTokenAndRefreshToken = async(userId)=>{
@@ -290,12 +291,15 @@ if(!isPasswordCorrect){
 user.password = newPassword 
 await user.save({validateBeforeSave:false})
 
+return res
+.status(200)
+.json(new ApiResponse(200, "Password change successfully"))
 })
 
 
 // ye function hai current user ko fetch krne ke liye
 const getCurrentUser = asyncHandler(async(req, res)=>{
-    return res.status(200).json(200, req.user, "Current user fetched successfully")
+    return res.status(200).json( new ApiResponse(200, req.user, "Current user fetched successfully"))
 })
 
 
@@ -307,7 +311,7 @@ const updateAccountDetails = asyncHandler(async(req, res)=>{
         throw new ApiError(400, "All fields are required")
     }
 
-    const user = User.findByIdAndUpdate(req.user?._id,
+    const user = await User.findByIdAndUpdate(req.user?._id,
      {
       $set:{
         fullname,
@@ -323,6 +327,7 @@ return res
 
 //ye hai user ke avatar ko change karne ke liye
 const updateUserAvatar = asyncHandler(async(req, res)=>{
+   // TODO: create a utility fordelete the old profile image after saving the new profile image
     const avatarLocalPath = req.file?.path /////ye hum multer middleware ki help se access kr paa rhe h Doubt:req.files or req.file me difference
 
     if(!avatarLocalPath){
@@ -363,7 +368,7 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
         throw new ApiError(400, "Error while uploading on Cover Image")
     }
 
-   const user =  User.findByIdAndUpdate(req.user?._id,
+   const user =  await User.findByIdAndUpdate(req.user?._id,
         {
             $set:{
               coverImage: coverImage.url
@@ -377,4 +382,141 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
 })
 
 
-export {registerUser, loginUser, logOutUser, refreshAccessToken, changePassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage}
+const getUserChannelProfile = asyncHandler(async(req, res)=>{
+    const {username} = req.params
+
+    if(!username?.trim()){
+     throw new ApiError(400, "Username is missing")
+    }
+
+    //User.find(username) ek trika hai ki hum user ko aise lekr aaye phir uske upr aggregation pipeline lagaye or ek hota hai ki hum direct hi match ka use krke aggregtion lga de .........confusing
+
+   const channel =  await User.aggregate([
+    {
+        $match:{ //iska mtlb hai jo bhi username params wale username se match ho rha h usko nikalo
+            username: username?.toLowerCase()
+        }
+    },
+    {//ye wala lookup hai subscribers ko lene ke liye ki user ke kitne subscriber hai 
+        //mai unn documents ko uthau ga jinme channel ka naam chai or code ho na ki mai users ko dekhne bthu ga ki kis kis user ne mujhe bhi subscribe kr rkha kyuki ek user multiple channel ko subscribe kr skta hai to simple ye hoga ki mai channel ka naam dhudu matlab jitne bhi documents hai jinme apke naam ka channel available hai utne hi apke subscriber honge
+         $lookup:{
+                from:"subscriptions",
+                localField:"_id", //localfield ka mtlb jaha hum data ko rkh rhe h
+                foreignField:"channel", //foreign field matlab jaha se hum data ko la rhe h
+                as:"subscribers"
+        }
+    },
+    {// ye wala lookup hai ki user ne kitno ko subscribe kr rkha h
+        //mai unn documents ko fetch kru ga jinme mera naam hai na ki channel ka naam 
+        //mtlb jitne bhi documents hai jinme apka naam hai utne hi channels ko apne subscribe kr rkha hai 
+        $lookup:{
+            from:"subscriptions",
+            localField:"_id",
+            foreignField:"subscriber",
+            as:"subcribedTo" 
+        }
+    },
+    {//ye hum user document me add krne ke liye kr rhe h ki humare pass phle sb tha jse username profile pic fullname email etc. lekin hume subscribers or subscribedTo bhi add krni thi toh upr wale lookups se to humne unko find kiya or iss add fields ko use krke count kiya 
+        $addFields:{
+            subscribersCount:{
+                $size:"$subscribers"
+            },
+            channelSubscribedToCount:{
+                $size:"$subscribedTo"
+            },
+            isSubscribed:{ //ye logic humne subscribe or subscribed  button ke liye likha h
+                $cond:{
+                    if:{$in: [req.user?._id, "subscribers.subscribe"]},
+                    then:true,
+                    else: false
+                }
+            }
+        }
+    },
+    { //iska matlab hai faltu fields ko hta do jo jruri hai sirf whi bhejo
+        $project:{
+            fullname:1,
+            username:1,
+            subscribersCount:1,
+            channelSubscribedToCount:1,
+            isSubscribed:1,
+            avatar:1,
+            coverImage:1,
+            email:1
+        }
+    }
+])
+
+ //ye condition humne isliye lgai hai kyuki aggregation ek array return krti hai agr array empty aaya h to ye error de do
+if(!channel?.length){
+    throw new ApiError(404, "channel does not exists")
+}
+
+console.log("channel ki details:", channel)
+
+return res
+.status(200)
+.json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
+
+})
+
+
+const getWatchHistory =  asyncHandler(async(req, res)=>{
+    const user = User.aggregate([
+        {
+            //upr wali pipeline me humne params se usename lekr user ko access kiya tha lekin ab yaha hume login user chahiye toh uske liye hume user id chahiye 
+            $match:{
+             //  _id : req.user._id //ab agr hum ase access kre ge id ko toh humare pass puri id ni jaye gi sirf andr ki string jaye gi jaise 123412afa lekin hume chaiye objectId('123412afa') kyuki aggregate me mongoose auto work ni krta isliye hume forcefully krwana pdta h
+             _id: new mongoose.Types.ObjectId(req.user._id) //isliye humne ase likha h
+
+            }
+        },
+        {
+            $lookup:{
+                from:"videos", //ye naam hota h model ka jo ki mongodb me store rhta h
+                localField:"watchHistory",
+                foreignField:"_id", //iska mtlb hai hum jaha se data ko la rhe h to mtlb videos ki id Doubt: lekin hum in id ko ase kse access kr liye upr to humne user ki id ke liye mongoose ka user krna pda
+                as:"watchHistory",
+                pipeline:[//humne ye pipeline iske andr isliye lgayi kyuki watchhistory me hume video ka owner bhi dikhta h 
+                    {
+                       $lookup:{
+                        from:"users",
+                        localField:"owner",
+                        foreignField:"_id",
+                        as:"owner", 
+                        pipeline:[//ye wali pipeline humne andr isliye lgayi kyuki ab ye project method user ki details pr hi apply hoga
+                            //TODO: agr isko bahar lgate toh?
+                            {
+                                $project:{
+                                    fullname:1,
+                                    username:1,
+                                    avatar:1
+                                }
+                            }
+                        ]
+                       }
+                    },
+                    {//ab humne ye wali field isliye ad kri kyuki iske bina pura array jata owner ka ab sirf ek value jaye gi jo ki ek object hoti h
+                        //❌ ye nahi: [{ owner data }]
+                        //✅ sirf ye:  {owner data}
+
+                        $addFields:{
+                            owner:{
+                                $first: "$owner"
+                            }
+                        }
+                    }
+               
+               
+               
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)               //Doubt:ye user[0].watchhistory kyu likha
+    .json(new ApiResponse(200, user[0].watchHistory, "Watch History fetched successfully"))
+})
+
+export {registerUser, loginUser, logOutUser, refreshAccessToken, changePassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, getUserChannelProfile, getWatchHistory}
