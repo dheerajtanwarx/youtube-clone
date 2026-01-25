@@ -31,12 +31,20 @@ app.use(cookieParser())
 
 // import routes
 import router from './routes/user.routes.js';
+import subscriptionRouter from './routes/subscription.routes.js';
 // import userRouter from './routes/user.routes.js';
 
 
 
 //declare routes
 app.use('/api/v1/user', router)
+app.use('/api/v1/subscription', subscriptionRouter)
+
+
+
+
+
+
 
 app.use((req, res, next) => {
   console.log("🌍 REQUEST:", req.method, req.url);

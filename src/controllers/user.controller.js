@@ -401,8 +401,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             //mai unn documents ko uthau ga jinme channel ka naam chai or code ho na ki mai users ko dekhne bthu ga ki kis kis user ne mujhe bhi subscribe kr rkha kyuki ek user multiple channel ko subscribe kr skta hai to simple ye hoga ki mai channel ka naam dhudu matlab jitne bhi documents hai jinme apke naam ka channel available hai utne hi apke subscriber honge
             $lookup: {
                 from: "subscriptions",
-                localField: "_id", //localfield ka mtlb jaha hum data ko rkh rhe h
-                foreignField: "channel", //foreign field matlab jaha se hum data ko la rhe h
+                localField: "_id", //localfield ka mtlb wo model jisme hum join kr rhe h
+                foreignField: "channel", //foreign field matlab jaha se hum data ko la rhe h mtlb jis se hum join kr rhe h
                 as: "subscribers"
             }
         },
