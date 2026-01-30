@@ -327,7 +327,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 //ye hai user ke avatar ko change karne ke liye
 const updateUserAvatar = asyncHandler(async (req, res) => {
-    // TODO: create a utility fordelete the old profile image after saving the new profile image
+    // TODO: create a utility for delete the old profile image after saving the new profile image
     const avatarLocalPath = req.file?.path /////ye hum multer middleware ki help se access kr paa rhe h Doubt:req.files or req.file me difference
 
     if (!avatarLocalPath) {
