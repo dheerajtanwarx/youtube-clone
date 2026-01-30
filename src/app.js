@@ -34,6 +34,7 @@ import router from './routes/user.routes.js';
 import subscriptionRouter from './routes/subscription.routes.js';
 import { videoRouter } from './routes/video.route.js';
 import { commentRouter } from './routes/comment.route.js';
+import { likeRouter } from './routes/like.route.js';
 // import userRouter from './routes/user.routes.js';
 
 
@@ -47,6 +48,8 @@ app.use('/api/v1/subscription', subscriptionRouter)
 app.use('/api/v1/videos', videoRouter)
 //comment route
 app.use('/api/v1/comment', commentRouter)
+//like route
+app.use('/api/v1/like', likeRouter)
 
 
 
