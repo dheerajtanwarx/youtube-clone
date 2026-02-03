@@ -278,5 +278,5 @@ const updatePlaylist = asyncHandler(async(req, res)=>{
          new ApiResponse(200, updatedPlaylist, "playlist is updated")
     )
 
-})
+}) 
 export{createPlaylist, getPlaylistBYId, addVideoToPlaylist, removeVideoFromPlaylist, deletePlaylist, getUserPlaylists, updatePlaylist}
